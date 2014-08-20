@@ -1,0 +1,141 @@
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.security.GeneralSecurityException;
+import java.security.InvalidKeyException;
+import java.security.Key;
+import java.security.KeyFactory;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.CipherInputStream;
+import javax.crypto.CipherOutputStream;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.KeyGenerator;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+
+
+public class Cryption {
+	private static SecretKeySpec key;
+	
+	public String toMD5(String password)
+	{
+		String passwordToHash = password;
+		String generatedPassword = null;
+		try {
+			// Create MessageDigest instance for MD5
+			MessageDigest md = MessageDigest.getInstance("MD5");
+			//Add password bytes to digest
+			md.update(passwordToHash.getBytes());
+			//Get the hash's bytes 
+			byte[] bytes = md.digest();
+			//This bytes[] has bytes in decimal format;
+			//Convert it to hexadecimal format
+			StringBuilder sb = new StringBuilder();
+			for(int i=0; i< bytes.length ;i++)
+			{
+				sb.append(Integer.toString((bytes[i] & 0xff) + 0x100, 16).substring(1));
+			}
+			//Get complete hashed password in hex format
+			generatedPassword = sb.toString();
+		} 
+		catch (NoSuchAlgorithmException e) 
+		{
+			e.printStackTrace();
+		}
+		
+		return generatedPassword;
+	}//end toMD5 method
+	
+	public void toSHA (String password)
+	{
+		String passphrase = password;
+		MessageDigest digest = null;
+		try {
+			digest = MessageDigest.getInstance("SHA");
+		} catch (NoSuchAlgorithmException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		digest.update(passphrase.getBytes());
+		key = new SecretKeySpec(digest.digest(), 0, 16, "AES");
+		System.out.println(key);
+		
+		Cipher aes;
+		byte[] cipherText=null;
+		try {
+			aes = Cipher.getInstance("AES/ECB/PKCS5Padding");
+			aes.init(Cipher.ENCRYPT_MODE, key);
+			cipherText = aes.doFinal("Test this program".getBytes());
+		} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		System.out.println("cipherText" + cipherText);
+		String testCipher = cipherText.toString();
+		System.out.println("testCipherString" + testCipher);
+		byte[] testCipherB = testCipher.getBytes();
+		System.out.println("testCipherBytes" + testCipherB);
+		String clearText=null;
+
+		try {
+			aes = Cipher.getInstance("AES/ECB/PKCS5Padding");
+			aes.init(Cipher.DECRYPT_MODE, key);
+			clearText = new String(aes.doFinal(testCipherB));
+		} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		System.out.println(clearText);
+		
+	}		
+	
+	public String encrypt (String clearText)
+	{
+		System.out.println(key);
+		Cipher aes;
+		byte[] cipherText=null;
+		try {
+			aes = Cipher.getInstance("AES/ECB/PKCS5Padding");
+			aes.init(Cipher.ENCRYPT_MODE, key);
+			cipherText = aes.doFinal(clearText.getBytes());
+		} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		System.out.println(cipherText);
+		System.out.println(cipherText.length);
+		return cipherText.toString();
+	}
+	
+	public String decrypt(String encryptedString)
+	{
+		System.out.println(encryptedString);
+		Cipher aes;
+		byte[] cipherText = encryptedString.getBytes();
+		String clearText=null;;
+		System.out.println(cipherText);
+		try {
+			aes = Cipher.getInstance("AES/ECB/PKCS5Padding");
+			aes.init(Cipher.DECRYPT_MODE, key);
+			clearText = new String(aes.doFinal(cipherText));
+		} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return clearText;
+	}
+}
